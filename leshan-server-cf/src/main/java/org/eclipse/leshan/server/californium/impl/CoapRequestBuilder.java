@@ -104,7 +104,7 @@ public class CoapRequestBuilder implements DownlinkRequestVisitor {
     public void visit(WriteAttributesRequest request) {
         coapRequest = Request.newPut();
         setTarget(coapRequest, request.getPath());
-        for (String query : request.getObserveSpec().toQueryParams()) {
+        for (String query : request.getAttributes().toQueryParams()) {
             coapRequest.getOptions().addUriQuery(query);
         }
     }

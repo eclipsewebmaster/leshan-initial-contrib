@@ -90,7 +90,7 @@ public class DownlinkRequestSerDes {
             @Override
             public void visit(WriteAttributesRequest request) {
                 o.add("kind", "writeAttributes");
-                o.add("observeSpec", request.getObserveSpec().toString());
+                o.add("observeSpec", request.getAttributes().toString());
             }
 
             @Override

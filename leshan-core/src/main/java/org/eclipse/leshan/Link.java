@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.util.StringUtils;
 
 /**
@@ -42,7 +43,7 @@ public class Link implements Serializable {
      * @param url the object link URL
      */
     public Link(String url) {
-        this(url, null);
+        this(url, (Map<String, ?>) null);
     }
 
     /**
@@ -60,6 +61,15 @@ public class Link implements Serializable {
         }
     }
 
+    /**
+     * Creates a new link with a set of attributes that is attached to it.
+     * @param url the link URL
+     * @param attributes the attribute set
+     */
+    public Link(String url, AttributeSet attributes) {
+        this(url, attributes == null ? null : attributes.getMap());
+    }
+    
     public String getUrl() {
         return url;
     }

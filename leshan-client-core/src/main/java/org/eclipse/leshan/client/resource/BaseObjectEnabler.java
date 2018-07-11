@@ -274,11 +274,22 @@ public abstract class BaseObjectEnabler implements LwM2mObjectEnabler {
     @Override
     public synchronized WriteAttributesResponse writeAttributes(ServerIdentity identity,
             WriteAttributesRequest request) {
-        // TODO should be implemented here to be available for all object enabler
+        // write the security object is forbidden
+        if (LwM2mId.SECURITY == id && !identity.isSystem()) {
+            return WriteAttributesResponse.notFound();
+        }
+        
+        // TODO Additional checks
+        
+        return doWriteAttributes(identity, request);
+    }
+
+    protected WriteAttributesResponse doWriteAttributes(ServerIdentity identity,
+            WriteAttributesRequest request) {
         // This should be a not implemented error, but this is not defined in the spec.
         return WriteAttributesResponse.internalServerError("not implemented");
     }
-
+    
     @Override
     public synchronized DiscoverResponse discover(ServerIdentity identity, DiscoverRequest request) {
 
@@ -290,13 +301,18 @@ public abstract class BaseObjectEnabler implements LwM2mObjectEnabler {
         if (id == LwM2mId.SECURITY) {
             return DiscoverResponse.notFound();
         }
+        
+        return doDiscover(identity, request);
+    }
 
+    protected DiscoverResponse doDiscover(ServerIdentity identity, DiscoverRequest request) {
+        // Use the object model as default provider for Discover
         LwM2mPath path = request.getPath();
         if (path.isObject()) {
 
             // Manage discover on object
-            Link[] ObjectLinks = LinkFormatHelper.getObjectDescription(getObjectModel(), null);
-            return DiscoverResponse.success(ObjectLinks);
+            Link[] objectLinks = LinkFormatHelper.getObjectDescription(getObjectModel(), null);
+            return DiscoverResponse.success(objectLinks);
 
         } else if (path.isObjectInstance()) {
 

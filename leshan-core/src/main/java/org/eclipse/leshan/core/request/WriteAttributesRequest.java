@@ -16,37 +16,44 @@
 package org.eclipse.leshan.core.request;
 
 import org.eclipse.leshan.ObserveSpec;
+import org.eclipse.leshan.core.attributes.AttributeSet;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.request.exception.InvalidRequestException;
 import org.eclipse.leshan.core.response.WriteAttributesResponse;
 
 public class WriteAttributesRequest extends AbstractDownlinkRequest<WriteAttributesResponse> {
 
-    private final ObserveSpec observeSpec;
+    private final AttributeSet attributes;
 
-    public WriteAttributesRequest(int objectId, ObserveSpec observeSpec) throws InvalidRequestException {
-        this(new LwM2mPath(objectId), observeSpec);
+    public WriteAttributesRequest(int objectId, AttributeSet attributes) throws InvalidRequestException {
+        this(new LwM2mPath(objectId), attributes);
     }
 
-    public WriteAttributesRequest(int objectId, int objectInstanceId, ObserveSpec observeSpec)
-            throws InvalidRequestException {
-        this(new LwM2mPath(objectId, objectInstanceId), observeSpec);
+    public WriteAttributesRequest(int objectId, int objectInstanceId, AttributeSet attributes) throws InvalidRequestException {
+        this(new LwM2mPath(objectId, objectInstanceId), attributes);
     }
 
-    public WriteAttributesRequest(int objectId, int objectInstanceId, int resourceId, ObserveSpec observeSpec)
-            throws InvalidRequestException {
-        this(new LwM2mPath(objectId, objectInstanceId, resourceId), observeSpec);
+    public WriteAttributesRequest(int objectId, int objectInstanceId, int resourceId, AttributeSet attributes) throws InvalidRequestException {
+        this(new LwM2mPath(objectId, objectInstanceId, resourceId), attributes);
     }
 
     public WriteAttributesRequest(String path, ObserveSpec observeSpec) throws InvalidRequestException {
-        this(newPath(path), observeSpec);
+        this(newPath(path), new AttributeSet(observeSpec.toQueryParams()));
     }
 
-    private WriteAttributesRequest(LwM2mPath path, ObserveSpec observeSpec) throws InvalidRequestException {
+    public WriteAttributesRequest(int objectId, int objectInstanceId, int resourceId, ObserveSpec observeSpec) throws InvalidRequestException {
+        this(new LwM2mPath(objectId, objectInstanceId, resourceId), new AttributeSet(observeSpec.toQueryParams()));
+    }
+
+    public WriteAttributesRequest(String path, AttributeSet attributes) {
+        this(newPath(path), attributes);
+    }
+
+    private WriteAttributesRequest(LwM2mPath path, AttributeSet attributes) throws InvalidRequestException {
         super(path);
-        if (observeSpec == null)
+        if (attributes == null)
             throw new InvalidRequestException("attributes are mandatory for %s", path);
-        this.observeSpec = observeSpec;
+        this.attributes = attributes;
     }
 
     @Override
@@ -54,20 +61,20 @@ public class WriteAttributesRequest extends AbstractDownlinkRequest<WriteAttribu
         visitor.visit(this);
     }
 
-    public ObserveSpec getObserveSpec() {
-        return this.observeSpec;
+    public AttributeSet getAttributes() {
+        return this.attributes;
     }
 
     @Override
     public String toString() {
-        return String.format("WriteAttributesRequest [%s, attributes=%s]", getPath(), getObserveSpec());
+        return String.format("WriteAttributesRequest [%s, attributes=%s]", getPath(), getAttributes());
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = super.hashCode();
-        result = prime * result + ((observeSpec == null) ? 0 : observeSpec.hashCode());
+        result = prime * result + ((attributes == null) ? 0 : attributes.hashCode());
         return result;
     }
 
@@ -80,10 +87,10 @@ public class WriteAttributesRequest extends AbstractDownlinkRequest<WriteAttribu
         if (getClass() != obj.getClass())
             return false;
         WriteAttributesRequest other = (WriteAttributesRequest) obj;
-        if (observeSpec == null) {
-            if (other.observeSpec != null)
+        if (attributes == null) {
+            if (other.attributes != null)
                 return false;
-        } else if (!observeSpec.equals(other.observeSpec))
+        } else if (!attributes.equals(other.attributes))
             return false;
         return true;
     }
