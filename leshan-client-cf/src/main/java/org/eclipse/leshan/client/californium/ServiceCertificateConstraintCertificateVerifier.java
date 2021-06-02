@@ -15,6 +15,7 @@
  *******************************************************************************/
 package org.eclipse.leshan.client.californium;
 
+import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
 import java.security.cert.CertPath;
 import java.security.cert.Certificate;
@@ -24,7 +25,6 @@ import org.eclipse.californium.scandium.dtls.AlertMessage;
 import org.eclipse.californium.scandium.dtls.AlertMessage.AlertDescription;
 import org.eclipse.californium.scandium.dtls.AlertMessage.AlertLevel;
 import org.eclipse.californium.scandium.dtls.CertificateMessage;
-import org.eclipse.californium.scandium.dtls.DTLSSession;
 import org.eclipse.californium.scandium.dtls.HandshakeException;
 import org.eclipse.leshan.core.util.Validate;
 
@@ -62,34 +62,31 @@ public class ServiceCertificateConstraintCertificateVerifier extends BaseCertifi
     }
 
     @Override
-    public CertPath verifyCertificate(Boolean clientUsage, CertificateMessage message, DTLSSession session)
+    public CertPath verifyCertificate(boolean clientUsage, CertificateMessage message, InetSocketAddress peerSocket)
             throws HandshakeException {
         CertPath messageChain = message.getCertificateChain();
 
-        validateCertificateChainNotEmpty(messageChain, session.getPeer());
+        validateCertificateChainNotEmpty(messageChain);
 
-        X509Certificate receivedServerCertificate = validateReceivedCertificateIsSupported(messageChain,
-                session.getPeer());
+        X509Certificate receivedServerCertificate = validateReceivedCertificateIsSupported(messageChain);
 
         // - must do PKIX validation with trustStore
         CertPath certPath;
         try {
             certPath = X509Util.applyPKIXValidation(messageChain, trustedCertificates);
         } catch (GeneralSecurityException e) {
-            AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE,
-                    session.getPeer());
+            AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE);
             throw new HandshakeException("Certificate chain could not be validated", alert, e);
         }
 
         // - target certificate must match what is provided certificate in server info
         if (!serviceCertificate.equals(receivedServerCertificate)) {
-            AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE,
-                    session.getPeer());
+            AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE);
             throw new HandshakeException("Certificate chain could not be validated", alert);
         }
 
         // - validate server name
-        validateSubject(session, receivedServerCertificate);
+        validateSubject(peerSocket, receivedServerCertificate);
 
         return certPath;
     }

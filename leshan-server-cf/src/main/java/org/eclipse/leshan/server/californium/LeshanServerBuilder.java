@@ -23,7 +23,6 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 
 import org.eclipse.californium.core.network.CoapEndpoint;
 import org.eclipse.californium.core.network.config.NetworkConfig;
@@ -34,7 +33,8 @@ import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig.Builder;
 import org.eclipse.californium.scandium.dtls.CertificateType;
-import org.eclipse.californium.scandium.dtls.x509.BridgeCertificateVerifier;
+import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
+import org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVerifier;
 import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.californium.DefaultEndpointFactory;
 import org.eclipse.leshan.core.californium.EndpointFactory;
@@ -468,33 +468,17 @@ public class LeshanServerBuilder {
 
             // check conflict for private key
             if (privateKey != null) {
-                if (incompleteConfig.getPrivateKey() != null && !incompleteConfig.getPrivateKey().equals(privateKey)) {
-                    throw new IllegalStateException(String.format(
-                            "Configuration conflict between LeshanBuilder and DtlsConnectorConfig.Builder for private key: %s != %s",
-                            privateKey, incompleteConfig.getPrivateKey()));
-                }
 
                 // if in raw key mode and not in X.509 set the raw keys
                 if (certificateChain == null && publicKey != null) {
-                    if (incompleteConfig.getPublicKey() != null && !incompleteConfig.getPublicKey().equals(publicKey)) {
-                        throw new IllegalStateException(String.format(
-                                "Configuration conflict between LeshanBuilder and DtlsConnectorConfig.Builder for public key: %s != %s",
-                                publicKey, incompleteConfig.getPublicKey()));
-                    }
 
-                    dtlsConfigBuilder.setIdentity(privateKey, publicKey);
+                    dtlsConfigBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(privateKey, publicKey));
                 }
                 // if in X.509 mode set the private key, certificate chain, public key is extracted from the certificate
                 if (certificateChain != null && certificateChain.length > 0) {
-                    if (incompleteConfig.getCertificateChain() != null
-                            && !Arrays.asList(certificateChain).equals(incompleteConfig.getCertificateChain())) {
-                        throw new IllegalStateException(String.format(
-                                "Configuration conflict between LeshanBuilder and DtlsConnectorConfig.Builder for certificate chain: %s != %s",
-                                Arrays.toString(certificateChain), incompleteConfig.getCertificateChain()));
-                    }
 
-                    dtlsConfigBuilder.setIdentity(privateKey, certificateChain, CertificateType.X_509,
-                            CertificateType.RAW_PUBLIC_KEY);
+                    dtlsConfigBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(privateKey, certificateChain, CertificateType.X_509,
+                            CertificateType.RAW_PUBLIC_KEY));
                 }
 
                 // handle trusted certificates or RPK
@@ -504,33 +488,11 @@ public class LeshanServerBuilder {
                                 "Configuration conflict between LeshanBuilder and DtlsConnectorConfig.Builder: if a AdvancedCertificateVerifier is set, trustedCertificates must not be set.");
                     }
                 } else {
-                    BridgeCertificateVerifier.Builder verifierBuilder = new BridgeCertificateVerifier.Builder();
-                    if (incompleteConfig.getRpkTrustStore() != null) {
-                        verifierBuilder.setTrustedRPKs(incompleteConfig.getRpkTrustStore());
-                    } else {
-                        // by default trust all RPK
-                        verifierBuilder.setTrustAllRPKs();
-                    }
-                    if (incompleteConfig.getTrustStore() != null) {
-                        if (trustedCertificates != null
-                                && !Arrays.equals(trustedCertificates, incompleteConfig.getTrustStore())) {
-                            throw new IllegalStateException(String.format(
-                                    "Configuration conflict between LeshanBuilder and DtlsConnectorConfig.Builder for trusted Certificates (trustStore) : \n%s != \n%s",
-                                    Arrays.toString(trustedCertificates),
-                                    Arrays.toString(incompleteConfig.getTrustStore())));
-                        }
-                        verifierBuilder.setTrustedCertificates(incompleteConfig.getTrustStore());
-                    } else {
-                        if (trustedCertificates != null) {
-                            verifierBuilder.setTrustedCertificates(trustedCertificates);
-                        }
-                    }
-                    if (incompleteConfig.getCertificateVerifier() != null) {
-                        if (trustedCertificates != null) {
-                            throw new IllegalStateException(
-                                    "Configuration conflict between LeshanBuilder and DtlsConnectorConfig.Builder: if a CertificateVerifier is set, trustedCertificates must not be set.");
-                        }
-                        verifierBuilder.setCertificateVerifier(incompleteConfig.getCertificateVerifier());
+                    StaticNewAdvancedCertificateVerifier.Builder verifierBuilder = StaticNewAdvancedCertificateVerifier.builder();
+                    // by default trust all RPK
+                    verifierBuilder.setTrustAllRPKs();
+                    if (trustedCertificates != null) {
+                        verifierBuilder.setTrustedCertificates(trustedCertificates);
                     }
                     dtlsConfigBuilder.setAdvancedCertificateVerifier(verifierBuilder.build());
                 }

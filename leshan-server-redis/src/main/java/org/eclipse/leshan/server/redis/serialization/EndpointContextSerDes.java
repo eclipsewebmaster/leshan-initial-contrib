@@ -29,14 +29,18 @@ import javax.security.auth.x500.X500Principal;
 import org.eclipse.californium.elements.AddressEndpointContext;
 import org.eclipse.californium.elements.EndpointContext;
 import org.eclipse.californium.elements.MapBasedEndpointContext;
+import org.eclipse.californium.elements.MapBasedEndpointContext.Attributes;
 import org.eclipse.californium.elements.auth.PreSharedKeyIdentity;
 import org.eclipse.californium.elements.auth.RawPublicKeyIdentity;
 import org.eclipse.californium.elements.auth.X509CertPath;
+import org.eclipse.californium.elements.util.DatagramReader;
+import org.eclipse.californium.elements.util.DatagramWriter;
+import org.eclipse.californium.elements.util.SerializationUtil;
+import org.eclipse.californium.elements.util.StringUtil;
 import org.eclipse.leshan.core.util.Hex;
 
 import com.eclipsesource.json.Json;
 import com.eclipsesource.json.JsonObject;
-import com.eclipsesource.json.JsonObject.Member;
 import com.eclipsesource.json.JsonValue;
 
 /**
@@ -67,13 +71,12 @@ public class EndpointContextSerDes {
             }
         }
         /** copy the attributes **/
-        Map<String, String> attributes = context.entries();
+        Map<String, Object> attributes = context.entries();
         if (!attributes.isEmpty()) {
-            JsonObject attContext = Json.object();
-            for (String key : attributes.keySet()) {
-                attContext.set(key, attributes.get(key));
-            }
-            peer.set(KEY_ATTRIBUTES, attContext);
+            DatagramWriter writer = new DatagramWriter();
+            SerializationUtil.write(writer, attributes);
+            String base64 = StringUtil.byteArrayToBase64(writer.toByteArray());
+            peer.set(KEY_ATTRIBUTES, base64);
         }
         return peer;
     }
@@ -106,13 +109,11 @@ public class EndpointContextSerDes {
         if (value == null) {
             endpointContext = new AddressEndpointContext(socketAddress, principal);
         } else {
-            int index = 0;
-            String attributes[] = new String[value.asObject().size() * 2];
-            for (Member member : value.asObject()) {
-                attributes[index++] = member.getName();
-                attributes[index++] = member.getValue().asString();
-            }
-            endpointContext = new MapBasedEndpointContext(socketAddress, principal, attributes);
+            String base64 = value.asString();
+            byte[] data = StringUtil.base64ToByteArray(base64);
+            DatagramReader reader = new DatagramReader(data, false);
+            Attributes contexAttributes = SerializationUtil.readEndpointContexAttributes(reader);
+            endpointContext = new MapBasedEndpointContext(socketAddress, principal, contexAttributes);
         }
         return endpointContext;
     }

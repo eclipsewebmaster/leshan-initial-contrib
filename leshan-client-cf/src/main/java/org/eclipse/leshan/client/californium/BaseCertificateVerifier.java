@@ -32,7 +32,6 @@ import org.eclipse.californium.scandium.dtls.CertificateMessage;
 import org.eclipse.californium.scandium.dtls.CertificateType;
 import org.eclipse.californium.scandium.dtls.CertificateVerificationResult;
 import org.eclipse.californium.scandium.dtls.ConnectionId;
-import org.eclipse.californium.scandium.dtls.DTLSSession;
 import org.eclipse.californium.scandium.dtls.HandshakeException;
 import org.eclipse.californium.scandium.dtls.HandshakeResultHandler;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
@@ -44,7 +43,7 @@ public abstract class BaseCertificateVerifier implements NewAdvancedCertificateV
     private final List<CertificateType> supportedCertificateType = Arrays.asList(CertificateType.X_509);
 
     @Override
-    public List<CertificateType> getSupportedCertificateType() {
+    public List<CertificateType> getSupportedCertificateTypes() {
         return supportedCertificateType;
     }
 
@@ -60,26 +59,25 @@ public abstract class BaseCertificateVerifier implements NewAdvancedCertificateV
 
     @Override
     public CertificateVerificationResult verifyCertificate(ConnectionId cid, ServerNames serverName,
-            Boolean clientUsage, boolean truncateCertificatePath, CertificateMessage message, DTLSSession session) {
+            InetSocketAddress remotePeer, boolean clientUsage, boolean truncateCertificatePath, CertificateMessage message) {
         try {
-            CertPath validatedCertPath = verifyCertificate(clientUsage, message, session);
+            CertPath validatedCertPath = verifyCertificate(clientUsage, message, remotePeer);
             return new CertificateVerificationResult(cid, validatedCertPath, null);
         } catch (HandshakeException exception) {
             return new CertificateVerificationResult(cid, exception, null);
         }
     }
 
-    protected abstract CertPath verifyCertificate(Boolean clientUsage, CertificateMessage message, DTLSSession session)
+    protected abstract CertPath verifyCertificate(boolean clientUsage, CertificateMessage message, InetSocketAddress peerSocket)
             throws HandshakeException;
 
     /**
      * Ensure that chain is not empty
      */
-    protected void validateCertificateChainNotEmpty(CertPath certChain, InetSocketAddress foreignPeerAddress)
+    protected void validateCertificateChainNotEmpty(CertPath certChain)
             throws HandshakeException {
         if (certChain.getCertificates().size() == 0) {
-            AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE,
-                    foreignPeerAddress);
+            AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE);
             throw new HandshakeException("Certificate chain could not be validated : server cert chain is empty",
                     alert);
         }
@@ -88,20 +86,17 @@ public abstract class BaseCertificateVerifier implements NewAdvancedCertificateV
     /**
      * Ensure that received certificate is x509 certificate
      */
-    protected X509Certificate validateReceivedCertificateIsSupported(CertPath certChain,
-            InetSocketAddress foreignPeerAddress) throws HandshakeException {
+    protected X509Certificate validateReceivedCertificateIsSupported(CertPath certChain) throws HandshakeException {
         Certificate receivedServerCertificate = certChain.getCertificates().get(0);
         if (!(receivedServerCertificate instanceof X509Certificate)) {
-            AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.UNSUPPORTED_CERTIFICATE,
-                    foreignPeerAddress);
+            AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.UNSUPPORTED_CERTIFICATE);
             throw new HandshakeException("Certificate chain could not be validated - unknown certificate type", alert);
         }
         return (X509Certificate) receivedServerCertificate;
     }
 
-    protected void validateSubject(final DTLSSession session, final X509Certificate receivedServerCertificate)
+    protected void validateSubject(final InetSocketAddress peerSocket, final X509Certificate receivedServerCertificate)
             throws HandshakeException {
-        final InetSocketAddress peerSocket = session.getPeer();
 
         if (X509CertUtil.matchSubjectDnsName(receivedServerCertificate, peerSocket.getHostName()))
             return;
@@ -109,7 +104,7 @@ public abstract class BaseCertificateVerifier implements NewAdvancedCertificateV
         if (X509CertUtil.matchSubjectInetAddress(receivedServerCertificate, peerSocket.getAddress()))
             return;
 
-        AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE, session.getPeer());
+        AlertMessage alert = new AlertMessage(AlertLevel.FATAL, AlertDescription.BAD_CERTIFICATE);
         throw new HandshakeException(
                 "Certificate chain could not be validated - server identity does not match certificate", alert);
     }

@@ -54,7 +54,7 @@ import org.eclipse.californium.elements.util.SslContextUtil;
 import org.eclipse.californium.scandium.DTLSConnector;
 import org.eclipse.californium.scandium.config.DtlsConnectorConfig;
 import org.eclipse.californium.scandium.dtls.ClientHandshaker;
-import org.eclipse.californium.scandium.dtls.DTLSSession;
+import org.eclipse.californium.scandium.dtls.DTLSContext;
 import org.eclipse.californium.scandium.dtls.HandshakeException;
 import org.eclipse.californium.scandium.dtls.Handshaker;
 import org.eclipse.californium.scandium.dtls.ResumingClientHandshaker;
@@ -751,7 +751,7 @@ public class LeshanClientDemo {
                             }
 
                             @Override
-                            public void sessionEstablished(Handshaker handshaker, DTLSSession establishedSession)
+                            public void contextEstablished(Handshaker handshaker, DTLSContext establishedContext)
                                     throws HandshakeException {
                                 if (handshaker instanceof ResumingServerHandshaker) {
                                     LOG.info("DTLS abbreviated Handshake initiated by server : SUCCEED");

@@ -37,6 +37,7 @@ import org.eclipse.californium.scandium.config.DtlsConnectorConfig.Builder;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
 import org.eclipse.californium.scandium.dtls.pskstore.AdvancedSinglePskStore;
 import org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier;
+import org.eclipse.californium.scandium.dtls.x509.SingleCertificateProvider;
 import org.eclipse.californium.scandium.dtls.x509.StaticNewAdvancedCertificateVerifier;
 import org.eclipse.leshan.client.EndpointsManager;
 import org.eclipse.leshan.client.servers.ServerIdentity;
@@ -113,7 +114,7 @@ public class CaliforniumEndpointsManager implements EndpointsManager {
                         false);
             } else if (serverInfo.secureMode == SecurityMode.RPK) {
                 // set identity
-                newBuilder.setIdentity(serverInfo.privateKey, serverInfo.publicKey);
+                newBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(serverInfo.privateKey, serverInfo.publicKey));
                 // set RPK truststore
                 final PublicKey expectedKey = serverInfo.serverPublicKey;
                 NewAdvancedCertificateVerifier rpkVerifier = new StaticNewAdvancedCertificateVerifier.Builder()
@@ -124,7 +125,7 @@ public class CaliforniumEndpointsManager implements EndpointsManager {
                         false, true);
             } else if (serverInfo.secureMode == SecurityMode.X509) {
                 // set identity
-                newBuilder.setIdentity(serverInfo.privateKey, new Certificate[] { serverInfo.clientCertificate });
+                newBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(serverInfo.privateKey, new Certificate[] { serverInfo.clientCertificate }));
 
                 // LWM2M v1.1.1 - 5.2.8.7. Certificate Usage Field
                 //

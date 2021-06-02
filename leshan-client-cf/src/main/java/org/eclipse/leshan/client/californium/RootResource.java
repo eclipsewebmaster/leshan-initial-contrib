@@ -26,7 +26,6 @@ import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
 import org.eclipse.californium.core.coap.Request;
-import org.eclipse.californium.core.network.Endpoint;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.leshan.client.bootstrap.BootstrapHandler;
 import org.eclipse.leshan.client.engine.RegistrationEngine;
@@ -181,8 +180,4 @@ public class RootResource extends LwM2mClientCoapResource {
         exchange.respond(toCoapResponseCode(response.getCode()), response.getErrorMessage());
     }
 
-    @Override
-    public List<Endpoint> getEndpoints() {
-        return coapServer.getEndpoints();
-    }
 }
