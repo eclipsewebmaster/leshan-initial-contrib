@@ -71,6 +71,7 @@ import org.eclipse.leshan.client.object.Server;
 import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.resource.listener.ObjectsListenerAdapter;
+import org.eclipse.leshan.client.servers.ServerIdentity;
 import org.eclipse.leshan.core.CertificateUsage;
 import org.eclipse.leshan.core.LwM2m;
 import org.eclipse.leshan.core.californium.DefaultEndpointFactory;
@@ -83,6 +84,7 @@ import org.eclipse.leshan.core.model.ResourceModel.Type;
 import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mNodeEncoder;
+import org.eclipse.leshan.core.request.ContentFormat;se
 import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.core.util.SecurityUtil;
 import org.slf4j.Logger;
@@ -936,6 +938,22 @@ public class LeshanClientDemo {
                     }
                 } else if (command.startsWith("update")) {
                     client.triggerRegistrationUpdate();
+                } else if (command.startsWith("send")) {
+                    LOG.info("sending (enter x to send)");
+                    ArrayList<String> paths = new ArrayList<String>();
+                    while(scanner.hasNext()) {
+                        String path = scanner.next();
+                        if(path.equals("x")) {
+                            break;
+                        }
+                        paths.add(path);
+                    }
+
+                    Map<String, ServerIdentity> servers = client.getRegisteredServers();
+                    for (Map.Entry<String, ServerIdentity> entry : servers.entrySet()) {
+                        LOG.info("sending to {}", entry.getKey());
+                        client.sendData(entry.getValue(), ContentFormat.SENML_CBOR, paths,2000);
+                    }
                 } else if (command.length() == 1 && wasdCommands.contains(command.charAt(0))) {
                     locationInstance.moveLocation(command);
                 } else {
