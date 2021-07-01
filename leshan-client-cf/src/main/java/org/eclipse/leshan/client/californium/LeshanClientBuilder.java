@@ -325,6 +325,10 @@ public class LeshanClientBuilder {
         if (incompleteConfig.getStaleConnectionThreshold() == null)
             dtlsConfigBuilder.setStaleConnectionThreshold(coapConfig.getLong(Keys.MAX_PEER_INACTIVITY_PERIOD));
 
+        // define default timeout (see https://github.com/eclipse/leshan/issues/1002)
+        if (incompleteConfig.getRetransmissionTimeout() == null)
+            dtlsConfigBuilder.setRetransmissionTimeout(coapConfig.getInt(Keys.ACK_TIMEOUT));
+
         // Use only 1 thread to handle DTLS connection by default
         if (incompleteConfig.getConnectionThreadCount() == null) {
             dtlsConfigBuilder.setConnectionThreadCount(1);

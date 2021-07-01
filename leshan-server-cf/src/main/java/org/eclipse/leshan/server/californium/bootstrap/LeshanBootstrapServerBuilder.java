@@ -467,6 +467,10 @@ public class LeshanBootstrapServerBuilder {
             if (incompleteConfig.getStaleConnectionThreshold() == null)
                 dtlsConfigBuilder.setStaleConnectionThreshold(coapConfig.getLong(Keys.MAX_PEER_INACTIVITY_PERIOD));
 
+            // define default timeout (see https://github.com/eclipse/leshan/issues/1002)
+            if (incompleteConfig.getRetransmissionTimeout() == null)
+                dtlsConfigBuilder.setRetransmissionTimeout(coapConfig.getInt(Keys.ACK_TIMEOUT));
+
             if (privateKey != null) {
                 // check conflict for private key
                 if (incompleteConfig.getPrivateKey() != null && !incompleteConfig.getPrivateKey().equals(privateKey)) {
