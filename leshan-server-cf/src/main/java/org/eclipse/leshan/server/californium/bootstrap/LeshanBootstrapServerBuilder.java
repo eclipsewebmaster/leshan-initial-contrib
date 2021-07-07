@@ -182,7 +182,8 @@ public class LeshanBootstrapServerBuilder {
      * <p>
      * If you want to deactivate RPK mode, look at
      * {@link LeshanBootstrapServerBuilder#setDtlsConfig(org.eclipse.californium.scandium.config.DtlsConnectorConfig.Builder)}
-     * and {@link Builder#setTrustCertificateTypes(CertificateType...)}
+     * and
+     * {@link Builder#setCertificateIdentityProvider(org.eclipse.californium.scandium.dtls.x509.CertificateProvider)}.
      * 
      * @param certificateChain the certificate chain of the bootstrap server.
      * @return the builder for fluent Bootstrap Server creation.
@@ -209,7 +210,8 @@ public class LeshanBootstrapServerBuilder {
      * <p>
      * If you need more complex/dynamic trust behavior, look at
      * {@link LeshanBootstrapServerBuilder#setDtlsConfig(org.eclipse.californium.scandium.config.DtlsConnectorConfig.Builder)}
-     * and {@link Builder#setCertificateVerifier(org.eclipse.californium.scandium.dtls.x509.CertificateVerifier)}
+     * and
+     * {@link Builder#setAdvancedCertificateVerifier(org.eclipse.californium.scandium.dtls.x509.NewAdvancedCertificateVerifier)}
      * instead.
      * 
      * @param trustedCertificates certificates trusted by the bootstrap server.
@@ -471,13 +473,14 @@ public class LeshanBootstrapServerBuilder {
 
                 // if in raw key mode and not in X.509 set the raw keys
                 if (certificateChain == null && publicKey != null) {
-                    dtlsConfigBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(privateKey, publicKey));
+                    dtlsConfigBuilder
+                            .setCertificateIdentityProvider(new SingleCertificateProvider(privateKey, publicKey));
                 }
                 // if in X.509 mode set the private key, certificate chain, public key is extracted from the certificate
                 if (certificateChain != null && certificateChain.length > 0) {
 
-                    dtlsConfigBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(privateKey, certificateChain, CertificateType.X_509,
-                            CertificateType.RAW_PUBLIC_KEY));
+                    dtlsConfigBuilder.setCertificateIdentityProvider(new SingleCertificateProvider(privateKey,
+                            certificateChain, CertificateType.X_509, CertificateType.RAW_PUBLIC_KEY));
                 }
 
                 // handle trusted certificates or RPK
@@ -487,7 +490,8 @@ public class LeshanBootstrapServerBuilder {
                                 "Configuration conflict between LeshanBuilder and DtlsConnectorConfig.Builder: if a AdvancedCertificateVerifier is set, trustedCertificates must not be set.");
                     }
                 } else {
-                    StaticNewAdvancedCertificateVerifier.Builder verifierBuilder = StaticNewAdvancedCertificateVerifier.builder();
+                    StaticNewAdvancedCertificateVerifier.Builder verifierBuilder = StaticNewAdvancedCertificateVerifier
+                            .builder();
                     // by default trust all RPK
                     verifierBuilder.setTrustAllRPKs();
                     if (trustedCertificates != null) {
