@@ -350,7 +350,6 @@ public class SecureIntegrationTestHelper extends IntegrationTestHelper {
         builder.setLocalAddress(clientAddress.getHostString(), clientAddress.getPort());
 
         Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setClientOnly();
         builder.setDtlsConfig(dtlsConfig);
 
         builder.setObjects(objects);
@@ -382,7 +381,6 @@ public class SecureIntegrationTestHelper extends IntegrationTestHelper {
         builder.setTrustStore(clientTrustStore);
 
         Builder dtlsConfig = new DtlsConnectorConfig.Builder();
-        dtlsConfig.setClientOnly();
         builder.setDtlsConfig(dtlsConfig);
 
         builder.setObjects(objects);

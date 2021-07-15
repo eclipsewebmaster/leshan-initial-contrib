@@ -104,7 +104,7 @@ keytool -genkeypair -alias server -keyalg EC -dname 'CN=localhost' \
         -storetype $DEFAULT_STORE_TYPE \
         -ext BasicConstraints=ca:false \
         -ext KeyUsage:critical=digitalSignature,keyAgreement \
-        -ext ExtendedkeyUsage=serverAuth \
+        -ext ExtendedkeyUsage=serverAuth,clientAuth \
         -keypass $SERVER_STORE_PWD -keystore $SERVER_STORE -storepass $SERVER_STORE_PWD
 keytool -exportcert -alias server -keystore $SERVER_STORE -storepass $SERVER_STORE_PWD | \
   keytool -importcert -alias server_self_signed -keystore $SERVER_STORE -storepass $SERVER_STORE_PWD -noprompt
@@ -116,7 +116,7 @@ keytool -genkeypair -alias serverInt -keyalg EC -dname 'CN=Server signed with In
         -storetype $DEFAULT_STORE_TYPE \
         -ext BasicConstraints=ca:false \
         -ext KeyUsage:critical=digitalSignature,keyAgreement \
-        -ext ExtendedkeyUsage=serverAuth \
+        -ext ExtendedkeyUsage=serverAuth,clientAuth \
         -keypass $SERVER_STORE_PWD -keystore $SERVER_STORE -storepass $SERVER_STORE_PWD
 keytool -exportcert -alias serverInt -keystore $SERVER_STORE -storepass $SERVER_STORE_PWD | \
   keytool -importcert -alias serverInt_self_signed -keystore $SERVER_STORE -storepass $SERVER_STORE_PWD -noprompt
@@ -133,7 +133,7 @@ keytool -certreq -alias server -dname 'CN=localhost' -keystore $SERVER_STORE -st
           -validity $VALIDITY \
           -ext BasicConstraints=ca:false \
           -ext KeyUsage:critical=digitalSignature,keyAgreement \
-          -ext ExtendedkeyUsage=serverAuth | \
+          -ext ExtendedkeyUsage=serverAuth,clientAuth | \
     keytool -importcert -alias server -keystore $SERVER_STORE -storepass $SERVER_STORE_PWD
 echo
 echo "${H2}Creating server certificate signed by intermediate CA...${RESET}"
@@ -142,7 +142,7 @@ keytool -certreq -alias serverInt -dname 'CN=Server signed with Intermediate CA'
           -validity $VALIDITY \
           -ext BasicConstraints=ca:false \
           -ext KeyUsage:critical=digitalSignature,keyAgreement \
-          -ext ExtendedkeyUsage=serverAuth \
+          -ext ExtendedkeyUsage=serverAuth,clientAuth \
           -ext san=dns:localhost | \
     keytool -importcert -alias serverInt -keystore $SERVER_STORE -storepass $SERVER_STORE_PWD
 
@@ -155,7 +155,7 @@ keytool -genkeypair -alias client -keyalg EC -dname 'CN=leshan_integration_test'
         -storetype $DEFAULT_STORE_TYPE \
         -ext BasicConstraints=ca:false \
         -ext KeyUsage:critical=digitalSignature,keyAgreement \
-        -ext ExtendedkeyUsage=clientAuth \
+        -ext ExtendedkeyUsage=serverAuth,clientAuth \
         -keypass $CLIENT_STORE_PWD -keystore $CLIENT_STORE -storepass $CLIENT_STORE_PWD
 keytool -exportcert -alias client -keystore $CLIENT_STORE -storepass $CLIENT_STORE_PWD | \
   keytool -importcert -alias client_self_signed -keystore $CLIENT_STORE -storepass $CLIENT_STORE_PWD -noprompt
@@ -169,7 +169,7 @@ keytool -certreq -alias client -keystore $CLIENT_STORE -storepass $CLIENT_STORE_
           -validity $VALIDITY \
           -ext BasicConstraints=ca:false \
           -ext KeyUsage:critical=digitalSignature,keyAgreement \
-          -ext ExtendedkeyUsage=clientAuth | \
+          -ext ExtendedkeyUsage=serverAuth,clientAuth | \
     keytool -importcert -alias client -keystore $CLIENT_STORE -storepass $CLIENT_STORE_PWD -noprompt
 echo
 echo "${H2}Creating client certificate signed by root CA with bad/unexpected CN...${RESET}"
@@ -178,7 +178,7 @@ keytool -certreq -alias client -dname 'CN=leshan_client_with_bad_cn' -keystore $
           -validity $VALIDITY \
           -ext BasicConstraints=ca:false \
           -ext KeyUsage:critical=digitalSignature,keyAgreement \
-          -ext ExtendedkeyUsage=clientAuth | \
+          -ext ExtendedkeyUsage=serverAuth,clientAuth | \
     keytool -importcert -alias client_bad_cn -keystore $CLIENT_STORE -storepass $CLIENT_STORE_PWD -noprompt
 echo
 echo "${H2}Creating client certificate signed by untrusted root CA with expected CN...${RESET}"
@@ -187,7 +187,7 @@ keytool -certreq -alias client -keystore $CLIENT_STORE -storepass $CLIENT_STORE_
           -validity $VALIDITY \
           -ext BasicConstraints=ca:false \
           -ext KeyUsage:critical=digitalSignature,keyAgreement \
-          -ext ExtendedkeyUsage=clientAuth | \
+          -ext ExtendedkeyUsage=serverAuth,clientAuth | \
     keytool -importcert -alias client_not_trusted -keystore $CLIENT_STORE -storepass $CLIENT_STORE_PWD -noprompt
 echo
 echo "${H2}Creating mfg client key and self-signed certificate with expected CN...${RESET}"
@@ -196,7 +196,7 @@ keytool -genkeypair -alias mfgClient -keyalg EC -dname 'CN=urn:dev:ops:32473-IoT
         -storetype $DEFAULT_STORE_TYPE \
         -ext BasicConstraints=ca:false \
         -ext KeyUsage:critical=digitalSignature,keyAgreement \
-        -ext ExtendedkeyUsage=clientAuth \
+        -ext ExtendedkeyUsage=serverAuth,clientAuth \
         -keypass $CLIENT_STORE_PWD -keystore $CLIENT_STORE -storepass $CLIENT_STORE_PWD
 echo
 echo "${H2}Import mfg products root CA certificate just to be able to sign certificate ...${RESET}"
@@ -211,5 +211,5 @@ keytool -certreq -alias mfgClient -keystore $CLIENT_STORE -storepass $CLIENT_STO
           -validity $VALIDITY \
           -ext BasicConstraints=ca:false \
           -ext KeyUsage:critical=digitalSignature,keyAgreement \
-          -ext ExtendedkeyUsage=clientAuth | \
+          -ext ExtendedkeyUsage=serverAuth,clientAuth | \
     keytool -importcert -alias mfgClient -keystore $CLIENT_STORE -storepass $CLIENT_STORE_PWD -noprompt
